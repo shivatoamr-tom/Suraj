@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Family Information App with Search</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    color: #33475b;
+    margin-bottom: 25px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  }
+
+  form, .search-container {
+    background: white;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 15px;
+    padding: 25px 30px;
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    margin: 15px 0 6px 0;
+    font-weight: 600;
+    color: #445069;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 16px;
+    border: 2px solid #d3dce6;
+    border-radius: 10px;
+    transition: border-color 0.3s ease;
+  }
+  input:focus, select:focus {
+    border-color: #4a90e2;
+    outline: none;
+  }
+
+  button {
+    width: 100%;
+    background: #4a90e2;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 8px 15px rgba(74, 144, 226, 0.4);
+    transition: background 0.3s ease;
+    margin-top: 20px;
+  }
+  button:hover {
+    background: #357abd;
+  }
+
+  .family-list {
+    width: 100%;
+    max-width: 450px;
+    background: white;
+    border-radius: 15px;
+    padding: 20px 25px;
+    box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+  }
+
+  .member-card {
+    border-bottom: 1px solid #ddd;
+    padding: 12px 0;
+    cursor: pointer;
+  }
+  .member-card:last-child {
+    border-bottom: none;
+  }
+
+  .member-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #33475b;
+  }
+  .member-relation {
+    font-size: 14px;
+    color: #777;
+  }
+
+  .details-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px 35px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    max-width: 350px;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    animation: fadeInScale 0.4s ease forwards;
+  }
+  .details-popup h2 {
+    margin: 0 0 15px 0;
+    color: #4a90e2;
+    text-align: center;
+  }
+  .details-popup p {
+    margin: 8px 0;
+    font-size: 16px;
+    color: #444;
+  }
+  .close-btn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin-top: 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+  }
+  .close-btn:hover {
+    background: #d63737;
+  }
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.7);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Family Information App</h1>
+
+<form id="familyForm">
+  <label for="name">Full Name</label>
+  <input type="text" id="name" placeholder="Enter full name" required />
+
+  <label for="relation">Relation</label>
+  <select id="relation" required>
+    <option value="" disabled selected>Select relation</option>
+    <option>Father</option>
+    <option>Mother</option>
+    <option>Brother</option>
+    <option>Sister</option>
+    <option>Grandfather</option>
+    <option>Grandmother</option>
+    <option>Uncle</option>
+    <option>Aunt</option>
+    <option>Cousin</option>
+    <option>Son</option>
+    <option>Daughter</option>
+  </select>
+
+  <label for="age">Age</label>
+  <input type="number" id="age" placeholder="Enter age" min="0" max="150" required />
+
+  <label for="phone">Contact Number</label>
+  <input type="text" id="phone" placeholder="Enter contact number" pattern="[\d\s+-]+" required />
+
+  <button type="submit">Add Family Member</button>
+</form>
+
+<div class="search-container">
+  <label for="searchInput">Search Family Member by Name</label>
+  <input type="text" id="searchInput" placeholder="Type name to search..." />
+</div>
+
+<div class="family-list" id="familyList"></div>
+
+<div class="details-popup" id="detailsPopup">
+  <h2 id="popupName"></h2>
+  <p><strong>Relation:</strong> <span id="popupRelation"></span></p>
+  <p><strong>Age:</strong> <span id="popupAge"></span></p>
+  <p><strong>Contact:</strong> <span id="popupPhone"></span></p>
+  <button class="close-btn" id="closePopup">Close</button>
+</div>
+
+<script>
+  const form = document.getElementById('familyForm');
+  const familyList = document.getElementById('familyList');
+  const searchInput = document.getElementById('searchInput');
+
+  const detailsPopup = document.getElementById('detailsPopup');
+  const popupName = document.getElementById('popupName');
+  const popupRelation = document.getElementById('popupRelation');
+  const popupAge = document.getElementById('popupAge');
+  const popupPhone = document.getElementById('popupPhone');
+  const closePopup = document.getElementById('closePopup');
+
+  let familyMembers = [];
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const name = form.name.value.trim();
+    const relation = form.relation.value;
+    const age = form.age.value.trim();
+    const phone = form.phone.value.trim();
+
+    if (familyMembers.find(m => m.name.toLowerCase() === name.toLowerCase())) {
+      alert('A family member with this name already exists!');
+      return;
+    }
+
+    const newMember = { name, relation, age, phone };
+    familyMembers.push(newMember);
+
+    form.reset();
+
+    // Don't display list after add
+    searchInput.value = '';
+    familyList.innerHTML = '';
+  });
+
+  function renderFamilyList(members) {
+    familyList.innerHTML = '';
+
+    if (members.length === 0) {
+      familyList.innerHTML = '<p style="color:#777; text-align:center;">No family members to display.</p>';
+      return;
+    }
+
+    members.forEach(member => {
+      const memberDiv = document.createElement('div');
+      memberDiv.className = 'member-card';
+      memberDiv.title = `View details for ${member.name}`;
+
+      memberDiv.innerHTML = `
+        <div class="member-name">${member.name}</div>
+        <div class="member-relation">${member.relation}</div>
+      `;
+
+      memberDiv.onclick = () => showDetails(member);
+
+      familyList.appendChild(memberDiv);
+    });
+  }
+
+  function showDetails(member) {
+    popupName.textContent = member.name;
+    popupRelation.textContent = member.relation;
+    popupAge.textContent = member.age;
+    popupPhone.textContent = member.phone;
+    detailsPopup.style.display = 'flex';
+  }
+
+  closePopup.onclick = () => {
+    detailsPopup.style.display = 'none';
+  }
+
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) {
+      familyList.innerHTML = '';
+      return;
+    }
+    const filtered = familyMembers.filter(m => m.name.toLowerCase().includes(query));
+    renderFamilyList(filtered);
+  });
+
+  // Initial empty list
+  familyList.innerHTML = '';
+</script>
+
+</body>
+</html>
